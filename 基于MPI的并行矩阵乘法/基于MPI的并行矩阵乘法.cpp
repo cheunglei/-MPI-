@@ -5,7 +5,8 @@
 #include <string>
 #include "mpi.h"
 #define MAXSIZE 100
-//mpiexec -n 2 基于MPI的并行矩阵乘法.exe 2 3 2
+//mpiexec -n 2 基于MPI的并行矩阵乘法.exe 200 200 200 5
+//编码采用gbk
 
 void init(double * A,double * B,int m, int n, int p);
 
@@ -74,6 +75,7 @@ int main(int argc, char* argv[])
     double* subC = new double[count * p];
 
     if (myid == 0) {
+        printf("num of process: %d\n", size);
         printf("matrix A shape: (%d, %d)\n", m, n);
         printf("matrix B shape: (%d, %d)\n", n, p);
         //printf("count: %d\n", count);
@@ -99,6 +101,7 @@ int main(int argc, char* argv[])
     }
     for (int t = 0; t < times; t++)
     {
+        MPI_Barrier(MPI_COMM_WORLD);
         startwtime = MPI_Wtime();
         //散播矩阵A
         MPI_Scatter(A, count * n, MPI_DOUBLE, subA, count * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
@@ -120,11 +123,11 @@ int main(int argc, char* argv[])
                 }
             }
         }
-
+        MPI_Barrier(MPI_COMM_WORLD);
         //收集
         MPI_Gather(subC, count * p, MPI_DOUBLE, C, count * p, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
-        MPI_Barrier(MPI_COMM_WORLD);
+
         if (myid == 0)
         {
             //for (int i = 0; i < m; i++)
@@ -138,7 +141,7 @@ int main(int argc, char* argv[])
             endwtime = MPI_Wtime();
             parallel_time += endwtime - startwtime;
             if(t == times - 1)
-                printf("parallel time: %.4lf\n", parallel_time/ times);
+                printf("parallel time: %.4lf\n", 1000 * parallel_time/ times);
         }
     }
 
@@ -152,8 +155,8 @@ int main(int argc, char* argv[])
             endwtime = MPI_Wtime();
             serial_time += endwtime - startwtime;
             if (t == times - 1) {
-                printf("serial time: %.4lf\n", serial_time/times);
-                printf("Speedup ratio: %.4lf", serial_time / parallel_time);
+                printf("serial time: %.4lf\n", 1000 * serial_time/times);
+                printf("Speedup ratio: %.4lf\n", serial_time / parallel_time);
             }
         }
     }
